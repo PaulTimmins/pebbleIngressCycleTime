@@ -10,15 +10,15 @@
     "resources": {
         "media": [
             {
-                "file": "images/res-bw.png",
-                "name": "IMAGE_RES",
-                "type": "png"
-            },
-            {
                 "file": "images/res_logo.png",
                 "menuIcon": true,
                 "name": "IMAGE_RES_LOGO",
-                "type": "png"
+                "type": "bitmap"
+            },
+            {
+                "file": "images/res-bw.png",
+                "name": "IMAGE_RES",
+                "type": "bitmap"
             }
         ]
     },
@@ -29,7 +29,7 @@
         "basalt"
     ],
     "uuid": "daeb9c98-fb68-456a-8ab9-50153774fa6f",
-    "versionLabel": "2.5",
+    "versionLabel": "2.6",
     "watchapp": {
         "watchface": true
     }

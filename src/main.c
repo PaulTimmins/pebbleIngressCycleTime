@@ -123,7 +123,6 @@ static void update_time(bool fullupdate) {
 	}
 	
 	if(fullupdate){
-   //if (clock_is_timezone_set()) { //thanks, pebble. #sigh
       uint32_t next;
       uint32_t last;
       if (clock_is_timezone_set()) { //thanks, pebble. #sigh
@@ -138,16 +137,13 @@ static void update_time(bool fullupdate) {
       uint32_t offset = last-(curcyclestart->tm_yday*86400)-(curcyclestart->tm_hour*60*60)-(curcyclestart->tm_min*60)-(curcyclestart->tm_sec);
       uint32_t cycle;
       uint32_t cp;
-      if (clock_is_timezone_set()) { //thanks, pebble. #sigh
-        cycle = t / CYCLE_SEC;
-        cp = (t % CYCLE_SEC) / CP_SEC + 1;
-      } else {
+
         cycle = (t - offset) / CYCLE_SEC;
         cp = (t % CYCLE_SEC) / CP_SEC + 1;
-      }
+      
       //APP_LOG( APP_LOG_LEVEL_ERROR , "full update %ld: utcoffset, %lu: offset, %lu: cycle, %lu: checkpoint, %lu: year", utcoffset, offset, cycle, cp, year);
 
-		  snprintf(buffer[0], BUF_SIZE, "%lu.%02lu", year, cycle);
+		  snprintf(buffer[0], BUF_SIZE, "%lu.%02lu", year, cycle); //fuck you cloudpebble, these snprintfs are legit
 		  snprintf(buffer[1], BUF_SIZE, "%02lu/35", cp);
 		  text_layer_set_text(tl_cycle, buffer[0]);
 		  text_layer_set_text(tl_cp, buffer[1]);
@@ -217,7 +213,8 @@ void appmessage_init(void) {
 	app_message_register_inbox_received(in_received_handler);
   app_message_register_inbox_dropped(in_dropped_handler);
  
-	app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
+	//app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum()); //because you weren't doing anything with that heap, right?
+  app_message_open(128,128); //god willing this really should be long enough *fingers crossed*
   app_message_outbox_send();
 }
 
@@ -225,10 +222,11 @@ void handle_init(void) {
 	my_window = window_create();
 	window_stack_push(my_window, true);
 	
-	GFont font_s = fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD);
-	GFont font_m = fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD);
+	GFont font_s = fonts_get_system_font(FONT_KEY_GOTHIC_18);
+	GFont font_m = fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD);
+  GFont font_24 = fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD);
 	GFont font_b = fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD);
-	Layer *root_layer = window_get_root_layer(my_window);	
+	Layer *root_layer = window_get_root_layer(my_window);
 	GRect frame = layer_get_frame(root_layer);
 	
   #ifdef PBL_COLOR
@@ -238,7 +236,7 @@ void handle_init(void) {
   #endif
 	
 	tl_cycle = text_layer_create(GRect(0, 0, 70, 26));
-	text_layer_set_font(tl_cycle, font_m);	
+	text_layer_set_font(tl_cycle, font_24);
 	text_layer_set_text_alignment(tl_cycle, GTextAlignmentLeft);
   #ifdef PBL_COLOR
     text_layer_set_background_color(tl_cycle, GColorBlue);
@@ -249,7 +247,7 @@ void handle_init(void) {
 	#endif
 	
 	tl_cp = text_layer_create(GRect(70, 0, frame.size.w-70, 26));
-	text_layer_set_font(tl_cp, font_m);
+	text_layer_set_font(tl_cp, font_24);
 	text_layer_set_text_alignment(tl_cp, GTextAlignmentRight);
 	#ifdef PBL_COLOR
     text_layer_set_background_color(tl_cp, GColorBlue);
@@ -272,7 +270,7 @@ void handle_init(void) {
 	#endif
 	
 	tl_list = text_layer_create(GRect(0, frame.size.h-25, frame.size.w, 20));
-	text_layer_set_font(tl_list, font_s);
+	text_layer_set_font(tl_list, font_m);
 	text_layer_set_text_alignment(tl_list, GTextAlignmentCenter);
 	#ifdef PBL_COLOR
     text_layer_set_background_color(tl_list, GColorBlue);
@@ -295,7 +293,7 @@ void handle_init(void) {
 #endif
     
   tl_realtime = text_layer_create(GRect(55, 60, frame.size.w-60, 20));
-	text_layer_set_font(tl_realtime, font_s);
+	text_layer_set_font(tl_realtime, font_m);
 	text_layer_set_text_alignment(tl_realtime, GTextAlignmentRight);
 	#ifdef PBL_COLOR
     text_layer_set_background_color(tl_realtime, GColorBlue);
@@ -306,7 +304,7 @@ void handle_init(void) {
 	#endif
     
 	tl_conn_layer = text_layer_create(GRect(55, 80, frame.size.w-60, 20));
-  text_layer_set_font(tl_conn_layer, font_s);
+  text_layer_set_font(tl_conn_layer, font_m);
 	text_layer_set_text_alignment(tl_conn_layer, GTextAlignmentRight);
 	#ifdef PBL_COLOR
     text_layer_set_background_color(tl_conn_layer, GColorBlue);
@@ -318,7 +316,7 @@ void handle_init(void) {
 	text_layer_set_text(tl_conn_layer, "BT: --");
 	
   tl_batt_layer = text_layer_create(GRect(55, 100, frame.size.w-60, 20));
-  text_layer_set_font(tl_batt_layer, font_s);
+  text_layer_set_font(tl_batt_layer, font_m);
 	text_layer_set_text_alignment(tl_batt_layer, GTextAlignmentRight);
 	#ifdef PBL_COLOR
     text_layer_set_background_color(tl_batt_layer, GColorBlue);
@@ -375,9 +373,9 @@ void handle_deinit(void) {
 	//text_layer_destroy(tl_list);
 	//text_layer_destroy(tl_conn_layer);
 	//text_layer_destroy(tl_batt_layer);
- 	gbitmap_destroy(img_res);
-	bitmap_layer_destroy(bl_res);
-	window_destroy(my_window);
+ 	//gbitmap_destroy(img_res);
+	//bitmap_layer_destroy(bl_res);
+	//window_destroy(my_window);
 }
 
 
